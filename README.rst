@@ -62,13 +62,13 @@ Arch Linux:
 
 .. code-block:: console
 
-    $ sudo pacman -S --needed gcc libelf make pkgconf python python-pip python-setuptools
+    $ sudo pacman -S --needed autoconf automake gawk gcc libelf libtool make pkgconf python python-setuptools
 
 Debian/Ubuntu:
 
 .. code-block:: console
 
-    $ sudo apt-get install gcc liblzma-dev libelf-dev libdw-dev make pkgconf python3 python3-dev python3-pip python3-setuptools zlib1g-dev
+    $ sudo apt-get install autoconf automake gawk gcc libelf-dev libdw-dev libtool make pkgconf python3 python3-dev python3-setuptools
 
 Note that Debian Stretch, Ubuntu Trusty, and Ubuntu Xenial (and older) ship
 Python versions which are too old. Python 3.6 or newer must be installed
@@ -78,7 +78,15 @@ Fedora:
 
 .. code-block:: console
 
-    $ sudo dnf install elfutils-devel gcc make pkgconf python3 python3-devel python3-pip python3-setuptools
+    $ sudo dnf install autoconf automake elfutils-devel gawk gcc libtool make pkgconf python3 python3-devel python3-setuptools
+
+OpenSuse tumbleweed:
+
+.. code-block:: console
+
+    $ sudo zypper in autoconf automake elfutils gawk gcc libtool make pkgconf python3 python38-devel zlib-devel flex bison xz-devel libbz2-devel libdw-devel
+    $ sudo ln -s /usr/lib64/liblzma.so.5 /usr/lib64/liblzma.so
+    $ sudo ln -s /usr/lib64/libbz2.so.1 /usr/lib64/libbz2.so
 
 Optionally, install:
 
@@ -108,6 +116,8 @@ must have debugging symbols available.
 
 Then, you can access variables in the program with ``prog['name']``, access
 structure members with ``.``, use various predefined helpers, and more:
+
+ > The following examples rely on the kernel having DWARF <http://dwarfstd.org/> symbols. In order to do so, you need to custom create a kernel.
 
 .. code-block:: pycon
 
