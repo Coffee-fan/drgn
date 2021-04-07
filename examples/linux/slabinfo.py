@@ -152,8 +152,14 @@ def slab_show(p):
 # --------------------------------------------------------------------------
 print("=" * 80)
 get_slabinfo = get_slab_slabinfo if _is_config_slab else get_slub_slabinfo
-slab_caches = prog['slab_caches']
+slab_caches_list = prog['slab_caches']
 
-slab_show(slab_caches.next)
+
+for kmem_cache in list_for_each_entry('struct kmem_cache', slab_caches_list.address_of_(), 'list'):
+    print(kmem_cache.name.string_().decode())
+    #print(s)
+#    print_node()
+
+#slab_show(slab_caches.next)
 #print_slabinfo_header()
 #print(slab_caches)
