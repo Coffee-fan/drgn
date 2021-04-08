@@ -30,6 +30,8 @@ Notes:
 # -- Utility methods --
 from drgn import NULL, Object, cast, container_of, execscript, offsetof, reinterpret, sizeof, Type
 from typing import Union
+from drgn import FaultError
+
 def list_entry(ptr: Object, type: Union[str, Type], member: str) -> Object:
     return container_of(ptr, type, member)
 
@@ -40,20 +42,26 @@ from drgn.helpers.linux import *
 _is_config_slab = 'CONFIG_SLAB' in get_kconfig(prog)
 
 from dataclasses import dataclass
-from ctypes import *
 
 @dataclass
 class SlabInfo:
-    active_objs : c_ulong = None
-    num_objs : c_ulong = None
-    active_slabs : c_ulong = None
-    num_slabs : c_ulong = None
-    shared_avail : c_ulong = None
-    limit : c_uint = None
-    batchcount : c_uint = None
-    shared : c_uint = None
-    objects_per_slab : c_uint = None
-    cache_order : c_uint = None
+    name: str = None
+    size: int = 0
+
+    active_objs : int = 0
+    num_objs : int = 0
+    active_slabs : int = 0
+    num_slabs : int = 0
+    shared_avail : int = 0
+    limit : int = 0
+    batchcount : int = 0
+    shared : int = 0
+    objects_per_slab : int = 0
+    pages_per_slab: int = 0
+    cache_order : int = None
+
+
+
 
 """
 
@@ -71,35 +79,55 @@ static inline struct kmem_cache_node *get_node(struct kmem_cache *s, int node)
 """
 
 
-def for_each_kmem_cache_node(s, n):
-    n = 0
-    for n in range(0, len(s.node)):
+def for_each_kmem_cache_node(s):
+    for n in range(len(s.node)):
         thisNode = s.node[n]
         if thisNode:
             yield s.node[n]
+        else:
+            print("Nada")
     return
 
 def get_slab_slabinfo(s):
     raise NotImplementedError()
     pass
 
-def get_slub_slabinfo(s):
-    nr_slabs: c_ulong = 0
-    nr_objs : c_ulong = 0
-    nr_free : c_ulong = 0
+def node_nr_slabs(node):
+    nr_slabs : int = 0
+    try:
+        nr_slabs = int(node.nr_slabs.value_())
+    except:
+        pass
+    return nr_slabs
+        
+def get_slub_slabinfo(kmem_cache):
+    nr_slabs: int = 0
+    nr_objs : int = 0
+    nr_free : int = 0
 
-    node : int
-    n = None
+#    i = 0
+#    print(repr(kmem_cache.node))
+#    for n in kmem_cache.node:
+#        print(f"i = {i}")
+#        i += 1
+
+
+
+    dump_kmcn(kmem_cache.node)
+    sinfo = SlabInfo()
 
     # for_each_kmem_cache_node(s, node, n) {
-    for node in for_each_kmem_cache_node(s, n):
-        print(f"Node => {node}")
+    for node in for_each_kmem_cache_node(kmem_cache):
+        #print(f"Node => {node}")
+        pass
+        #nr_slabs += node_nr_slabs(node)
+        #print(repr(node.nr_slabs))
+        #nr_slabs += int(node.nr_slabs.value_())
         # nr_slabs += node_nr_slabs(n)
         # nr_objs += node_nr_objs(n)
         # nr_free += count_partial(n, count_free)
     # }
 
-    sinfo = SlabInfo()
     sinfo.active_objs = nr_objs - nr_free
     sinfo.num_objs = nr_objs
     sinfo.active_slabs = nr_slabs
@@ -108,11 +136,22 @@ def get_slub_slabinfo(s):
     #sinfo.cache_order = oo_order(s.oo)    
 
 
-    print(type(s))
-    print(s.name)
-    pass
+    #print(type(s))
+    #print(s.name)
+    return sinfo
 
 
+def dump_kmcn(n):
+    i: int = 0
+    while i < 64:
+        obj = n[i]
+        try:
+            o_ctr = obj.total_objects.counter
+            print(f"{i}: Total objects: {o_ctr}")
+        except FaultError:
+            print(f"{i} is not mapped")
+        i += 1
+    
 def print_slabinfo_header():
     is_config_slab = 'CONFIG_SLAB' in get_kconfig(prog)
 
@@ -120,8 +159,8 @@ def print_slabinfo_header():
         print("slabinfo - version: 2.1 (statistics)\n")
     else:
         print("slabinfo - version: 2.1\n")
-    print("# name            <active_objs> <num_objs> <objsize> <objperslab> <pagesperslab>")
-    print(" : tunables <limit> <batchcount> <sharedfactor>")
+    print("# name            <active_objs> <num_objs> <objsize> <objperslab> <pagesperslab>", end="")
+    print(" : tunables <limit> <batchcount> <sharedfactor>", end="")
     print(" : slabdata <active_slabs> <num_slabs> <sharedavail>")
 
     if is_config_slab:
@@ -136,30 +175,28 @@ def cache_show(s):
     sinfo = get_slabinfo(s)
     pass
 
-def slab_show(p):
-    # if p.value_() == slab_caches.next.value_():
-    #     print("They are equal")
+def slab_show(kmem_cache):
+    s: SlabInfo = get_slabinfo(kmem_cache)
+    name: str = kmem_cache.name.string_().decode()
+    size = int(kmem_cache.size)
+    print(f"{name:17} {s.active_objs:6d} "
+          f"{s.num_objs:6d} {size:6d} "
+          f"{s.objects_per_slab:4d} {s.pages_per_slab:4d}", end="")
+    print(" : tunables "
+           f"{s.limit:4d} {s.batchcount:4d} {s.shared:4d}", end="")
+    print(" : slabdata "
+           f"{s.active_slabs:6d} {s.num_slabs:6d} {s.shared_avail:6d}", end="")
 
-    s = list_entry(p, 'struct kmem_cache', "list")
-    print(f"s ==> {s.node}")
-    if p == slab_caches.next:
-        print_slabinfo_header()
-    cache_show(s)
+    print("")
+    #cache_show(kmem_cache)
 
-    
 # --------------------------------------------------------------------------
 # Starts here
 # --------------------------------------------------------------------------
-print("=" * 80)
 get_slabinfo = get_slab_slabinfo if _is_config_slab else get_slub_slabinfo
-slab_caches_list = prog['slab_caches']
-
-
-for kmem_cache in list_for_each_entry('struct kmem_cache', slab_caches_list.address_of_(), 'list'):
-    print(kmem_cache.name.string_().decode())
-    #print(s)
-#    print_node()
-
-#slab_show(slab_caches.next)
-#print_slabinfo_header()
-#print(slab_caches)
+print_slabinfo_header()
+for kmem_cache in list_for_each_entry('struct kmem_cache',
+                    prog['slab_caches'].address_of_(),
+                    'list'):
+    slab_show(kmem_cache)
+    #dump_kmcn(kmem_cache.node)
