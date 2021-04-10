@@ -105,21 +105,20 @@ def get_slub_slabinfo(kmem_cache):
     nr_objs : int = 0
     nr_free : int = 0
 
-#    i = 0
-#    print(repr(kmem_cache.node))
-#    for n in kmem_cache.node:
-#        print(f"i = {i}")
-#        i += 1
 
-
-
-    dump_kmcn(kmem_cache.node)
     sinfo = SlabInfo()
 
     # for_each_kmem_cache_node(s, node, n) {
-    for node in for_each_kmem_cache_node(kmem_cache):
-        #print(f"Node => {node}")
-        pass
+    total_items = 0
+    for index in range(len(kmem_cache.node)):
+        try:
+            item = kmem_cache.node[index]
+            nr_slabs += int(item.nr_slabs.counter)
+            nr_objs += int(item.total_objects.counter)
+        except FaultError:
+            pass
+
+
         #nr_slabs += node_nr_slabs(node)
         #print(repr(node.nr_slabs))
         #nr_slabs += int(node.nr_slabs.value_())
@@ -143,11 +142,14 @@ def get_slub_slabinfo(kmem_cache):
 
 def dump_kmcn(n):
     i: int = 0
+    total_count = Object(prog, 'unsigned long', 0)
+    total_count: int  = 0
     while i < 64:
         obj = n[i]
         try:
             o_ctr = obj.total_objects.counter
-            print(f"{i}: Total objects: {o_ctr}")
+            total_count += int(obj.total_objects.counter)
+            print(f"{i}: Total objects: {o_ctr} -> Type: {type(o_ctr)}")
         except FaultError:
             print(f"{i} is not mapped")
         i += 1
