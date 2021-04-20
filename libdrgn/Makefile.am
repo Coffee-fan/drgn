@@ -130,7 +130,8 @@ _drgn_la_SOURCES = python/constants.c \
 		   python/symbol.c \
 		   python/test.c \
 		   python/type.c \
-		   python/util.c
+		   python/util.c \
+		   python/drgnlog.c
 
 _drgn_la_CFLAGS = -fvisibility=hidden
 _drgn_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_CPPFLAGS) -iquote $(srcdir)/python \

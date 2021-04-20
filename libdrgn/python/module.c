@@ -5,6 +5,8 @@
 #include <libkdumpfile/kdumpfile.h>
 #endif
 
+#include "drgnlog.h"
+
 #include "drgnpy.h"
 #include "../path.h"
 
@@ -213,6 +215,9 @@ static int add_type_aliases(PyObject *m)
 
 DRGNPY_PUBLIC PyMODINIT_FUNC PyInit__drgn(void)
 {
+	LOGGER(LOG_INFO, "Starting program");
+
+
 	PyObject *m = PyModule_Create(&drgnmodule);
 	if (!m)
 		return NULL;

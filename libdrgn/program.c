@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/statfs.h>
+#include <../python/drgnlog.h>
 #include <unistd.h>
 
 #include "debug_info.h"
@@ -71,6 +72,7 @@ void drgn_program_set_platform(struct drgn_program *prog,
 void drgn_program_init(struct drgn_program *prog,
 		       const struct drgn_platform *platform)
 {
+	LOGGER(LOG_INFO,"Called drgn_program_init");
 	memset(prog, 0, sizeof(*prog));
 	drgn_memory_reader_init(&prog->reader);
 	drgn_program_init_types(prog);
@@ -86,6 +88,7 @@ void drgn_program_init(struct drgn_program *prog,
 
 void drgn_program_deinit(struct drgn_program *prog)
 {
+	LOGGER(LOG_INFO, "Called drgn_program_deinit");
 	if (prog->prstatus_cached) {
 		if (prog->flags & DRGN_PROGRAM_IS_LINUX_KERNEL)
 			drgn_prstatus_vector_deinit(&prog->prstatus_vector);

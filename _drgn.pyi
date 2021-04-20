@@ -49,6 +49,20 @@ Parameters annotated with this type accept a filesystem path as :class:`str`,
 :class:`bytes`, or :class:`os.PathLike`.
 """
 
+class Thread:
+    tid: int
+    """Thread ID."""
+
+    object: Object
+    """
+    If debugging the kernel, ``struct task_struct *`` object for this thread.
+    Otherwise, not defined.
+    """
+
+    def stack_trace(self) -> StackTrace:
+        """Get the stack trace for this thread."""
+        ...
+        
 class Program:
     """
     A ``Program`` represents a crashed or running program. It can be used to
@@ -69,6 +83,11 @@ class Program:
             added.
         """
         ...
+
+    def thread(self, tid: int) -> Thread:
+        """Get the thread with the given thread ID."""
+        ...
+
     flags: ProgramFlags
     """Flags which apply to this program."""
 

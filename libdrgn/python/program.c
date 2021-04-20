@@ -1,6 +1,9 @@
 // Copyright (c) Facebook, Inc. and its affiliates.
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <stdio.h>
+#include "drgnlog.h"
+
 #include "drgnpy.h"
 #include "../hash_table.h"
 #include "../program.h"
@@ -705,6 +708,8 @@ static StackTrace *Program_stack_trace(Program *self, PyObject *args,
 	PyObject *thread;
 	struct drgn_stack_trace *trace;
 	StackTrace *ret;
+	
+	LOGGER(LOG_INFO, "Program_stack_trace on entry");
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:stack_trace", keywords,
 					 &thread))
